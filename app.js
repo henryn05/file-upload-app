@@ -24,70 +24,57 @@ const UPLOAD_TEMP_PATH = "/tmp/uploads";
 app.use(fileUpload());
 
 // List all objects in a bucket
-app.get("/IMAGES_BUCKET", async (req, res) => {
-  const listObjectsParams = {
-    Bucket: IMAGES_BUCKET,
-  };
-
+app.get("/my-local-bucket", async (req, res) => {
   try {
-    const listObjectsResponse = await s3Client.send(
-      new ListObjectsV2Command(listObjectsParams)
-    );
-    res.json(listObjectsResponse.Contents || []);
+    const listObjectsParams = { Bucket: IMAGES_BUCKET };
+    const command = new ListObjectsV2Command(listObjectsParams);
+    const response = await s3Client.send(command);
+    res.send(response);
   } catch (error) {
-    console.error("Error listing objects:", error);
-    res.status(500).send("Error listing objects");
+    console.error(error);
+    res.status(500).send("Error listing files.");
   }
 });
 
 // Retrieve an object from a bucket
-app.get("/IMAGES_BUCKET/:fileName", async (req, res) => {
-  const fileName = req.params.fileName;
+app.get("/my-local-bucket", async (req, res) => {
+  const fileName = req.query.fileName;
 
-  const getObjectParams = {
-    Bucket: IMAGES_BUCKET,
-    Key: fileName,
-  };
+  if (!fileName) {
+    return res.status(400).send("File name is required.");
+  }
 
   try {
-    const data = await s3Client.send(new GetObjectCommand(getObjectParams));
-    res.setHeader("Content-Type", data.ContentType);
-    data.Body.pipe(res);
+    const getObjectParams = { Bucket: IMAGES_BUCKET, Key: fileName };
+    const command = new GetObjectCommand(getObjectParams);
+    const response = await s3Client.send(command);
+    response.Body.pipe(res);
   } catch (error) {
-    console.error("Error retrieving file:", error);
-    res.status(500).send("Error retrieving file");
+    console.error(error);
+    res.status(500).send("Error retrieving file.");
   }
 });
 
 // Upload an object to a bucket
-app.post("/IMAGES_BUCKET", async (req, res) => {
-  if (!req.files || !req.files.image) {
-    return res.status(400).send("No file uploaded");
+app.post("/my-local-bucket", async (req, res) => {
+  const file = req.files.image;
+
+  if (!file) {
+    return res.status(400).send("No file uploaded.");
   }
 
-  const file = req.files.image;
-  const fileName = file.name;
-  const tempPath = path.join(UPLOAD_TEMP_PATH, fileName);
-
   try {
-    // Save file to temporary path
-    await file.mv(tempPath);
-
-    // Upload file to S3
     const uploadParams = {
       Bucket: IMAGES_BUCKET,
-      Key: fileName,
-      Body: fs.createReadStream(tempPath),
+      Key: file.name,
+      Body: file.data,
     };
-    await s3Client.send(new PutObjectCommand(uploadParams));
-
-    // Clean up temporary file
-    fs.unlinkSync(tempPath);
-
-    res.send("File uploaded successfully");
+    const command = new PutObjectCommand(uploadParams);
+    await s3Client.send(command);
+    res.send("File uploaded successfully.");
   } catch (error) {
-    console.error("Error uploading file:", error);
-    res.status(500).send("Error uploading file");
+    console.error(error);
+    res.status(500).send("Error uploading file.");
   }
 });
 

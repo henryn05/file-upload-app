@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>File Upload App</title>
+  </head>
+  <body>
+    <h1>View All Files</h1>
+    <form action="/my-local-bucket" method="get">
+      <button type="submit">View Files</button>
+    </form>
+
+    <h1>View Single File</h1>
+    <form action="/my-local-bucket" method="get">
+      <label for="fileName">File Name:</label>
+      <input type="text" id="fileName" name="fileName" placeholder="Enter file name" />
+      <button type="submit">View File</button>
+    </form>
+
+    <h1>Upload File</h1>
+    <form action="/my-local-bucket" method="post" enctype="multipart/form-data">
+      <input type="file" name="image" />
+      <input type="submit" value="Upload" />
+    </form>
+  </body>
+</html>
