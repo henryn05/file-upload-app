@@ -6,8 +6,8 @@ const {
   PutObjectCommand,
   GetObjectCommand,
 } = require("@aws-sdk/client-s3");
-const fs = require("fs");
-const path = require("path");
+// const fs = require("fs");
+// const path = require("path");
 
 const app = express();
 const port = 4566;
