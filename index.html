@@ -29,7 +29,7 @@
     <script>
         // List all files
         function listFiles() {
-            fetch('/images')
+            fetch('/my-local-bucket')
                 .then(response => response.json())
                 .then(data => {
                     const fileList = document.getElementById('fileList');
@@ -45,7 +45,7 @@
         // Upload a file
         function uploadFile() {
             const formData = new FormData(document.getElementById('uploadForm'));
-            fetch('/images', {
+            fetch('/my-local-bucket', {
                 method: 'POST',
                 body: formData
             })
@@ -59,7 +59,7 @@
         // Retrieve a file
         function retrieveFile() {
             const fileName = document.getElementById('fileNameInput').value;
-            fetch(`/images/${fileName}`)
+            fetch(`/my-local-bucket/${fileName}`)
                 .then(response => response.blob())
                 .then(blob => {
                     const url = URL.createObjectURL(blob);
