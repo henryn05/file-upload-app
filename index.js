@@ -18,13 +18,30 @@ const s3Client = new S3Client({
   forcePathStyle: true,
 });
 
-const IMAGES_BUCKET = "my-local-bucket";
+const IMAGES_BUCKET = "instance-profile";
 const UPLOAD_TEMP_PATH = "/tmp/uploads";
 
 app.use(fileUpload());
 
+// Serve index.html for the root URL
+app.get(`/${IMAGES_BUCKET}`, (req, res) => {
+  const params = {
+    Bucket: "instance-profile",
+    Key: "index.html",
+  };
+
+  s3.getObject(params, (err, data) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      res.set("Content-Type", "text/html");
+      res.send(data.Body.toString());
+    }
+  });
+});
+
 // List all objects in a bucket
-app.get("/my-local-bucket", async (req, res) => {
+app.get("/${IMAGES_BUCKET}", async (req, res) => {
   try {
     const listObjectsParams = { Bucket: IMAGES_BUCKET };
     const command = new ListObjectsV2Command(listObjectsParams);
@@ -37,7 +54,7 @@ app.get("/my-local-bucket", async (req, res) => {
 });
 
 // Retrieve an object from a bucket
-app.get("/my-local-bucket", async (req, res) => {
+app.get(`/${IMAGES_BUCKET}/:fileName`, async (req, res) => {
   const fileName = req.query.fileName;
 
   if (!fileName) {
@@ -56,7 +73,7 @@ app.get("/my-local-bucket", async (req, res) => {
 });
 
 // Upload an object to a bucket
-app.post("/my-local-bucket", async (req, res) => {
+app.post(`/${IMAGES_BUCKET}`, async (req, res) => {
   const file = req.files.image;
 
   if (!file) {
