@@ -27,7 +27,7 @@
     <img id="retrievedImage" alt="Retrieved file will appear here">
 
     <script>
-        const IMAGES_BUCKET = process.env.BUCKET_NAME || "instanceprofile";
+        const IMAGES_BUCKET = "instanceprofile";
         // List all files
         function listFiles() {
             fetch(`/${IMAGES_BUCKET}`)
