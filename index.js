@@ -6,47 +6,43 @@ const {
   PutObjectCommand,
   GetObjectCommand,
 } = require("@aws-sdk/client-s3");
-// const fs = require("fs");
-// const path = require("path");
+require("dotenv").config();
 
 const app = express();
-const port = 4566;
+const port = process.env.PORT || 4566;
 
 const s3Client = new S3Client({
-  region: "us-east-1",
-  endpoint: "http://localhost:4566",
-  forcePathStyle: true,
+  region: process.env.AWS_REGION || "us-east-1", // Default region from environment variables
 });
 
-const IMAGES_BUCKET = "instance-profile";
-const UPLOAD_TEMP_PATH = "/tmp/uploads";
+const IMAGES_BUCKET = process.env.BUCKET_NAME || "instanceprofile"; // Bucket name from environment variables
 
 app.use(fileUpload());
 
 // Serve index.html for the root URL
-app.get(`/${IMAGES_BUCKET}`, (req, res) => {
+app.get(`/`, (req, res) => {
   const params = {
-    Bucket: "instance-profile",
+    Bucket: IMAGES_BUCKET,
     Key: "index.html",
   };
 
-  s3.getObject(params, (err, data) => {
+  s3Client.send(new GetObjectCommand(params), (err, data) => {
     if (err) {
       res.status(500).send(err);
     } else {
       res.set("Content-Type", "text/html");
-      res.send(data.Body.toString());
+      data.Body.pipe(res); // Stream the object data to the response
     }
   });
 });
 
 // List all objects in a bucket
-app.get("/${IMAGES_BUCKET}", async (req, res) => {
+app.get(`/${IMAGES_BUCKET}`, async (req, res) => {
   try {
     const listObjectsParams = { Bucket: IMAGES_BUCKET };
     const command = new ListObjectsV2Command(listObjectsParams);
     const response = await s3Client.send(command);
-    res.send(response);
+    res.send(response.Contents); // Send list of objects
   } catch (error) {
     console.error(error);
     res.status(500).send("Error listing files.");
@@ -55,7 +51,7 @@ app.get("/${IMAGES_BUCKET}", async (req, res) => {
 
 // Retrieve an object from a bucket
 app.get(`/${IMAGES_BUCKET}/:fileName`, async (req, res) => {
-  const fileName = req.query.fileName;
+  const fileName = req.params.fileName;
 
   if (!fileName) {
     return res.status(400).send("File name is required.");
@@ -65,6 +61,7 @@ app.get(`/${IMAGES_BUCKET}/:fileName`, async (req, res) => {
     const getObjectParams = { Bucket: IMAGES_BUCKET, Key: fileName };
     const command = new GetObjectCommand(getObjectParams);
     const response = await s3Client.send(command);
+    res.setHeader("Content-Type", response.ContentType);
     response.Body.pipe(res);
   } catch (error) {
     console.error(error);
@@ -74,7 +71,7 @@ app.get(`/${IMAGES_BUCKET}/:fileName`, async (req, res) => {
 
 // Upload an object to a bucket
 app.post(`/${IMAGES_BUCKET}`, async (req, res) => {
-  const file = req.files.image;
+  const file = req.files?.image;
 
   if (!file) {
     return res.status(400).send("No file uploaded.");
