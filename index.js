@@ -6,7 +6,9 @@ const {
   PutObjectCommand,
   GetObjectCommand,
 } = require("@aws-sdk/client-s3");
+
 require("dotenv").config();
+const path = require("path");
 
 const app = express();
 const port = process.env.PORT || 4566;
@@ -21,19 +23,7 @@ app.use(fileUpload());
 
 // Serve index.html for the root URL
 app.get(`/`, (req, res) => {
-  const params = {
-    Bucket: IMAGES_BUCKET,
-    Key: "index.html",
-  };
-
-  s3Client.send(new GetObjectCommand(params), (err, data) => {
-    if (err) {
-      res.status(500).send(err);
-    } else {
-      res.set("Content-Type", "text/html");
-      data.Body.pipe(res); // Stream the object data to the response
-    }
-  });
+  res.sendFile(path.join(__dirname, "index.html")); // Adjust path as needed
 });
 
 // List all objects in a bucket
