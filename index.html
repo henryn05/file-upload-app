@@ -27,9 +27,10 @@
     <img id="retrievedImage" alt="Retrieved file will appear here">
 
     <script>
+        const IMAGES_BUCKET = process.env.BUCKET_NAME || "instanceprofile";
         // List all files
         function listFiles() {
-            fetch('/my-local-bucket')
+            fetch(`/${IMAGES_BUCKET}`)
                 .then(response => response.json())
                 .then(data => {
                     const fileList = document.getElementById('fileList');
@@ -45,7 +46,7 @@
         // Upload a file
         function uploadFile() {
             const formData = new FormData(document.getElementById('uploadForm'));
-            fetch('/my-local-bucket', {
+            fetch(`/${IMAGES_BUCKET}`, {
                 method: 'POST',
                 body: formData
             })
@@ -59,7 +60,7 @@
         // Retrieve a file
         function retrieveFile() {
             const fileName = document.getElementById('fileNameInput').value;
-            fetch(`/my-local-bucket/${fileName}`)
+            fetch(`/${IMAGES_BUCKET}/${fileName}`)
                 .then(response => response.blob())
                 .then(blob => {
                     const url = URL.createObjectURL(blob);
